@@ -1,10 +1,14 @@
 package com.example.gastronova.network
+
+import com.example.gastronova.api.FavoritosApi
+import com.example.gastronova.api.RestaurantApi
+import com.example.gastronova.api.RutaApi
+import com.example.gastronova.api.UsuarioApi
 import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 import java.util.concurrent.TimeUnit
-import com.example.gastronova.api.UsuarioApi
 
 object ApiClient {
     // Emulador: http://10.0.2.2:8080/
@@ -22,6 +26,7 @@ object ApiClient {
         .writeTimeout(20, TimeUnit.SECONDS)
         .build()
 
+    // --- Usuario ---
     val usuarioApi: UsuarioApi by lazy {
         Retrofit.Builder()
             .baseUrl(BASE_URL)
@@ -29,5 +34,35 @@ object ApiClient {
             .client(client)
             .build()
             .create(UsuarioApi::class.java)
+    }
+
+    // --- Restaurant ---
+    val restaurantApi: RestaurantApi by lazy {
+        Retrofit.Builder()
+            .baseUrl(BASE_URL)
+            .addConverterFactory(GsonConverterFactory.create())
+            .client(client)
+            .build()
+            .create(RestaurantApi::class.java)
+    }
+
+    // --- Ruta ---
+    val rutaApi: RutaApi by lazy {
+        Retrofit.Builder()
+            .baseUrl(BASE_URL)
+            .addConverterFactory(GsonConverterFactory.create())
+            .client(client)
+            .build()
+            .create(RutaApi::class.java)
+    }
+
+    // --- Favoritos (rutas guardadas) ---
+    val favoritosApi: FavoritosApi by lazy {
+        Retrofit.Builder()
+            .baseUrl(BASE_URL)
+            .addConverterFactory(GsonConverterFactory.create())
+            .client(client)
+            .build()
+            .create(FavoritosApi::class.java)
     }
 }

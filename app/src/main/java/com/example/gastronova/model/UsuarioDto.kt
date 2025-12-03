@@ -1,5 +1,7 @@
 package com.example.gastronova.model
 
+import com.google.gson.annotations.SerializedName
+
 data class UsuarioDto(
     val id: Int? = null,
     val nombre: String,
@@ -7,5 +9,7 @@ data class UsuarioDto(
     val correo: String,
     val usuario: String,
     val contrasena: String,
-    val tipo_usuario: Boolean = true
+
+    @SerializedName("tipo_usuario") // <- el backend sigue usando tipo_usuario
+    val tipoUsuario: Boolean = true // <- en Kotlin usamos camelCase
 )

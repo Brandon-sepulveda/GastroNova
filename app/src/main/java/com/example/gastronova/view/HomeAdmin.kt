@@ -1,5 +1,8 @@
 package com.example.gastronova.view
 
+import Olive200
+import Olive600
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -10,18 +13,16 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
@@ -30,9 +31,7 @@ import androidx.navigation.NavHostController
 import com.example.gastronova.R
 
 @Composable
-fun Opcion(navController: NavHostController) {
-    var nombre by remember { mutableStateOf("") }
-    var apellido by remember { mutableStateOf("") }
+fun HomeAdmin(navController: NavHostController) {
     Box(modifier = Modifier.padding(16.dp)) {
         Image(
             painter = painterResource(id = R.drawable.ic_launcher_foreground_cat),
@@ -60,7 +59,7 @@ fun Opcion(navController: NavHostController) {
                 verticalArrangement = Arrangement.spacedBy(16.dp)) {
 
                 Text(
-                    text = "Bienvenido $nombre $apellido",
+                    text = "Bienvenido/a",
                     style = MaterialTheme.typography.headlineSmall,
                     fontWeight = FontWeight.Bold
                 )
@@ -81,11 +80,25 @@ fun Opcion(navController: NavHostController) {
                     Text(text = "Registrar ruta gastronomica")
                 }
                 Button(
-                    onClick = { navController.navigate("VerRuta") },
+                    onClick = { navController.navigate("VerRutas") },
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(16.dp)
                 ) {
                     Text(text = "Ver rutas gastronomicas")
+                }
+                // Botón volver
+                Button(
+                    onClick = { navController.navigate("login") },
+                    modifier = Modifier.fillMaxWidth(),
+                    border = BorderStroke(width = 2.dp, color = Olive600), // El borde se mantiene
+                    shape = RoundedCornerShape(16.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = Color.Transparent, // ARREGLO: Fondo transparente
+                        contentColor = Olive600             // ARREGLO: Texto del mismo color que el borde
+                    ),
+                    elevation = ButtonDefaults.buttonElevation(0.dp) // Opcional: quita la sombra para que se vea plano
+                ) {
+                    Text(text = "Cerrar sesión")
                 }
 
 
@@ -97,6 +110,7 @@ fun Opcion(navController: NavHostController) {
                         .fillMaxWidth().width(100.dp),
                     contentScale = ContentScale.Fit
                 )
+
 
             }
         }

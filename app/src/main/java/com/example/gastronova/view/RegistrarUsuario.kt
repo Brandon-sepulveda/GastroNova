@@ -38,28 +38,37 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextDecoration
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import com.example.gastronova.R
 import com.example.gastronova.controller.AuthViewModel
 
-//-----------REGISTER----------------
 @Composable
-fun Register(navController: NavHostController) {
-    var usuario by remember { mutableStateOf("") }
-    var contrasena by remember { mutableStateOf("") }
-    var repContrasena by remember { mutableStateOf("") }
+fun RegistrarUsuario(navController: NavHostController) {
+    val vm: AuthViewModel = viewModel()
+    val state by vm.registerState.collectAsState()
+
     var nombre by remember { mutableStateOf("") }
     var apellido by remember { mutableStateOf("") }
     var correo by remember { mutableStateOf("") }
+    var usuario by remember { mutableStateOf("") }
+    var contrasena by remember { mutableStateOf("") }
+    var repContrasena by remember { mutableStateOf("") }
+
     var showPass by rememberSaveable { mutableStateOf(false) }
     var showPass2 by rememberSaveable { mutableStateOf(false) }
-
-    val vm: AuthViewModel = viewModel()
-    val state by vm.registerState.collectAsState()
     var showAlert by remember { mutableStateOf(false) }
+
+    // Si el registro fue exitoso, volvemos a login (rutas: "register" -> "login")
+    LaunchedEffect(state.success) {
+        if (state.success == true) {
+            navController.navigate("login") {
+                popUpTo("register") { inclusive = true }
+                launchSingleTop = true
+            }
+        }
+    }
 
     Box(
         modifier = Modifier.fillMaxSize(),
@@ -73,16 +82,19 @@ fun Register(navController: NavHostController) {
             shape = RoundedCornerShape(16.dp),
             elevation = CardDefaults.cardElevation(defaultElevation = 8.dp)
         ) {
-            Column(modifier = Modifier.padding(16.dp),
+            Column(
+                modifier = Modifier.padding(16.dp),
                 horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.spacedBy(16.dp)) {
+                verticalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
 
                 Text(
                     text = "Bienvenido a GastroNova",
                     style = MaterialTheme.typography.headlineSmall,
                     fontWeight = FontWeight.Bold
                 )
-                //NOMBRE
+
+                // NOMBRE
                 OutlinedTextField(
                     value = nombre,
                     onValueChange = { nombre = it },
@@ -91,7 +103,8 @@ fun Register(navController: NavHostController) {
                     shape = RoundedCornerShape(16.dp),
                     singleLine = true
                 )
-                //APELLIDO
+
+                // APELLIDO
                 OutlinedTextField(
                     value = apellido,
                     onValueChange = { apellido = it },
@@ -100,7 +113,8 @@ fun Register(navController: NavHostController) {
                     shape = RoundedCornerShape(16.dp),
                     singleLine = true
                 )
-                //CORREO
+
+                // CORREO
                 OutlinedTextField(
                     value = correo,
                     onValueChange = { correo = it },
@@ -110,7 +124,8 @@ fun Register(navController: NavHostController) {
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
                     singleLine = true
                 )
-                //USUARIO
+
+                // USUARIO
                 OutlinedTextField(
                     value = usuario,
                     onValueChange = { usuario = it },
@@ -119,7 +134,8 @@ fun Register(navController: NavHostController) {
                     shape = RoundedCornerShape(16.dp),
                     singleLine = true
                 )
-                //CONTRASEÑA
+
+                // CONTRASEÑA
                 OutlinedTextField(
                     value = contrasena,
                     onValueChange = { contrasena = it },
@@ -144,7 +160,8 @@ fun Register(navController: NavHostController) {
                         }
                     }
                 )
-                //REPETIR CONTRASEÑA
+
+                // REPETIR CONTRASEÑA
                 OutlinedTextField(
                     value = repContrasena,
                     onValueChange = { repContrasena = it },
@@ -181,6 +198,7 @@ fun Register(navController: NavHostController) {
                                 correo = correo.trim(),
                                 usuario = usuario.trim(),
                                 contrasena = contrasena.trim()
+                                // tipo_usuario: usa el valor por defecto que maneje el ViewModel / backend
                             )
                         }
                     },
@@ -196,6 +214,7 @@ fun Register(navController: NavHostController) {
                         Text(text = "Registrarse")
                     }
                 }
+
                 if (showAlert) {
                     AlertDialog(
                         onDismissRequest = { showAlert = false },
@@ -205,18 +224,30 @@ fun Register(navController: NavHostController) {
                             }
                         },
                         title = { Text("Contraseñas no coinciden") },
-                        text = { Text("Por favor asegúrate de que ambas contraseñas sean iguales antes de continuar.") }
+                        text = {
+                            Text(
+                                "Por favor asegúrate de que ambas contraseñas " +
+                                        "sean iguales antes de continuar."
+                            )
+                        }
                     )
                 }
+
+                // Mensajes de estado
                 when {
                     state.loading -> Text("Creando cuenta...")
-                    state.success == true -> {
-                        // vuelve al login
-                        LaunchedEffect(Unit) { navController.popBackStack() }
-                    }
-                    state.success == false -> Text("No se pudo registrar (usuario o correo ya existen)")
-                    state.error != null -> Text("Error: ${state.error}")
+                    state.success == false ->
+                        Text(
+                            "No se pudo registrar (usuario o correo ya existen)",
+                            color = MaterialTheme.colorScheme.error
+                        )
+                    state.error != null ->
+                        Text(
+                            "Error: ${state.error}",
+                            color = MaterialTheme.colorScheme.error
+                        )
                 }
+
                 Text(
                     text = "¿Ya tienes una cuenta?",
                     textDecoration = TextDecoration.Underline,
@@ -225,7 +256,6 @@ fun Register(navController: NavHostController) {
                         .padding(bottom = 8.dp)
                         .clickable { navController.navigate("login") }
                 )
-
             }
         }
     }

@@ -53,11 +53,19 @@ fun Login(navController: NavHostController) {
     val vm: AuthViewModel = viewModel()
     val state by vm.loginState.collectAsState()
 
-    // Navega SOLO cuando cambia a true y limpia el back stack del login
-    LaunchedEffect(state.success) {
-        if (state.success == true) {
-            navController.navigate("Opcion") {
-                popUpTo("login") { inclusive = true } // ajusta si tu ruta de login se llama distinto
+    // Navega cuando el login es exitoso, según el tipo de usuario
+    LaunchedEffect(state.success, state.usuario) {
+        val usuarioLogueado = state.usuario
+        if (state.success == true && usuarioLogueado != null) {
+
+            // 👀 acá usamos el campo del DTO ya corregido: tipoUsuario
+            val esAdmin = usuarioLogueado.tipoUsuario == true
+
+            // Asegúrate que estas rutas existan en AppNav
+            val destino = if (esAdmin) "homeAdmin" else "homeUser"
+
+            navController.navigate(destino) {
+                popUpTo("login") { inclusive = true }
                 launchSingleTop = true
             }
         }
@@ -159,10 +167,11 @@ fun Login(navController: NavHostController) {
                     }
                 }
 
-                // Mensajes de estado simples
                 when {
-                    state.success == false -> Text("Usuario o contraseña incorrectos")
-                    state.error != null -> Text("Error: ${state.error}")
+                    state.success == false && state.error == null ->
+                        Text("Usuario o contraseña incorrectos")
+                    state.error != null ->
+                        Text("Error: ${state.error}")
                 }
 
                 Text(

@@ -12,7 +12,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
@@ -49,7 +48,7 @@ import com.example.gastronova.view.components.RestaurantItems
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun VerRutas(navController: NavHostController) {
+fun VerRutasUsuario(navController: NavHostController) {
 
     // Estados locales para los selectores
     var tipoRuta by remember { mutableStateOf("") }
@@ -92,7 +91,7 @@ fun VerRutas(navController: NavHostController) {
                 modifier = Modifier
                     .align(Alignment.Center)
                     .padding(start = 110.dp)
-                    .size(125.dp),
+                    .fillMaxWidth(0.3f),
                 contentScale = ContentScale.Fit
             )
         }
@@ -139,6 +138,15 @@ fun VerRutas(navController: NavHostController) {
                             color = MaterialTheme.colorScheme.error
                         )
                     }
+
+                    // Selector de tipo de ruta (solo UI)
+                    Selector(
+                        label = "Tipo de ruta",
+                        value = tipoRuta,
+                        options = tipos,
+                        onSelect = { tipoRuta = it },
+                        modifier = Modifier.fillMaxWidth()
+                    )
 
                     // Selector de ruta con datos desde backend
                     Selector(
@@ -221,9 +229,31 @@ fun VerRutas(navController: NavHostController) {
                         }
                     }
 
+                    // Error al guardar favoritos
+                    if (favSaveState.success == false && favSaveState.error != null) {
+                        Text(
+                            text = "No se pudo guardar en favoritos: ${favSaveState.error}",
+                            color = MaterialTheme.colorScheme.error
+                        )
+                    }
+
+                    // Botón guardar ruta en favoritos
+                    Button(
+                        onClick = {
+                            rutaSeleccionada?.id?.let { rutaId ->
+                                favoritosVm.guardar(rutaId)
+                            }
+                        },
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(16.dp),
+                        enabled = rutaSeleccionada != null
+                    ) {
+                        Text(text = "Guardar ruta")
+                    }
+
                     // Botón volver
                     Button(
-                        onClick = { navController.navigate("homeAdmin") },
+                        onClick = { navController.navigate("homeUser") },
                         modifier = Modifier.fillMaxWidth(),
                         shape = RoundedCornerShape(16.dp)
                     ) {

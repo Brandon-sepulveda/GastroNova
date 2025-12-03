@@ -12,7 +12,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
@@ -41,63 +40,56 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import com.example.gastronova.R
 import com.example.gastronova.controller.FavoritosViewModel
-import com.example.gastronova.controller.RutaViewModel
 import com.example.gastronova.model.RutaDto
-import com.example.gastronova.model.RestaurantDto
-import com.example.gastronova.view.components.Selector
 import com.example.gastronova.view.components.RestaurantItems
+import com.example.gastronova.view.components.Selector
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun VerRutas(navController: NavHostController) {
+fun RutasGuardadas(navController: NavHostController) {
 
-    // Estados locales para los selectores
-    var tipoRuta by remember { mutableStateOf("") }
+    val vm: FavoritosViewModel = viewModel()
+    val listState by vm.listState.collectAsState()
+    val deleteState by vm.deleteState.collectAsState()
+
     var rutaSeleccionadaNombre by remember { mutableStateOf("") }
 
-    // ViewModels
-    val rutaVm: RutaViewModel = viewModel()
-    val favoritosVm: FavoritosViewModel = viewModel()
-
-    val listaState by rutaVm.listState.collectAsState()
-    val favSaveState by favoritosVm.saveState.collectAsState()
-
-    // Cargar rutas desde el backend al entrar
+    // Cargar favoritos al entrar
     LaunchedEffect(Unit) {
-        rutaVm.cargarRutas()
+        vm.cargarFavoritos()
     }
 
-    // Tipos de ruta (solo UI, como antes)
-    val tipos = listOf("Tematica unica", "Tematica mixta")
+    // Si borramos una favorita, recargamos lista y limpiamos selección
+    LaunchedEffect(deleteState.success) {
+        if (deleteState.success == true) {
+            rutaSeleccionadaNombre = ""
+            vm.cargarFavoritos()
+        }
+    }
 
-    // Nombres de rutas disponibles desde el backend
-    val rutasDisponibles: List<String> = listaState.data.map { it.nombre }
+    val opcionesRutasGuardadas = listState.data.map { it.nombre }
 
-    // Ruta seleccionada según el nombre escogido
     val rutaSeleccionada: RutaDto? =
-        listaState.data.firstOrNull { it.nombre == rutaSeleccionadaNombre }
+        listState.data.firstOrNull { it.nombre == rutaSeleccionadaNombre }
 
     Scaffold(
         contentWindowInsets = WindowInsets.safeDrawing
     ) { innerPadding ->
 
-        // Imagen del gato con mapa
-        Box(
-            modifier = Modifier
-                .padding(16.dp)
-        ) {
+        // Imagen del gato arriba
+        Box(modifier = Modifier.padding(16.dp)) {
             Image(
                 painter = painterResource(id = R.drawable.gato_mapa),
                 contentDescription = "GatoMapa",
                 modifier = Modifier
                     .align(Alignment.Center)
                     .padding(start = 110.dp)
-                    .size(125.dp),
+                    .fillMaxWidth(0.3f),
                 contentScale = ContentScale.Fit
             )
         }
 
-        // Contenido principal
+        // Tarjeta principal
         Box(
             modifier = Modifier
                 .fillMaxSize()
@@ -118,76 +110,61 @@ fun VerRutas(navController: NavHostController) {
                         .padding(16.dp)
                         .verticalScroll(rememberScrollState()),
                     horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.spacedBy(16.dp)
+                    verticalArrangement = Arrangement.spacedBy(14.dp)
                 ) {
 
                     Text(
-                        text = "Buscar ruta gastronómica",
+                        text = "Mis rutas guardadas",
                         style = MaterialTheme.typography.headlineSmall,
                         fontWeight = FontWeight.Bold
                     )
 
-                    // Estado de carga
-                    if (listaState.loading) {
-                        Text("Cargando rutas...")
+                    if (listState.loading) {
+                        Text("Cargando rutas guardadas...")
                     }
 
-                    // Error al cargar
-                    if (listaState.error != null) {
+                    if (listState.error != null) {
                         Text(
-                            text = "Error al cargar rutas: ${listaState.error}",
+                            text = "Error: ${listState.error}",
                             color = MaterialTheme.colorScheme.error
                         )
                     }
 
-                    // Selector de ruta con datos desde backend
-                    Selector(
-                        label = "Ruta",
-                        value = rutaSeleccionadaNombre,
-                        options = rutasDisponibles,
-                        onSelect = { rutaSeleccionadaNombre = it },
-                        modifier = Modifier.fillMaxWidth()
-                    )
+                    if (!listState.loading && listState.data.isEmpty()) {
+                        Text("Aún no tienes rutas guardadas.")
+                    }
 
-                    // Si hay ruta seleccionada
+                    // Selector SOLO con rutas guardadas
+                    if (listState.data.isNotEmpty()) {
+                        Selector(
+                            label = "Selecciona una ruta guardada",
+                            value = rutaSeleccionadaNombre,
+                            options = opcionesRutasGuardadas,
+                            onSelect = { rutaSeleccionadaNombre = it },
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                    }
+
+                    // Mostrar la ruta seleccionada abajo
                     if (rutaSeleccionada != null) {
-
                         HorizontalDivider(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(vertical = 8.dp),
+                            modifier = Modifier.fillMaxWidth(),
                             thickness = 2.dp
                         )
 
-                        // Nombre y descripción
                         Text(
                             text = rutaSeleccionada.nombre,
                             style = MaterialTheme.typography.titleLarge,
                             fontWeight = FontWeight.Bold
                         )
 
-                        if (!rutaSeleccionada.descripcion.isNullOrBlank()) {
-                            Text(
-                                text = rutaSeleccionada.descripcion!!,
-                                style = MaterialTheme.typography.bodyMedium
-                            )
-                        } else {
-                            Text(
-                                text = "Esta ruta aún no tiene descripción registrada.",
-                                style = MaterialTheme.typography.bodyMedium
-                            )
-                        }
-
-                        HorizontalDivider(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(vertical = 8.dp),
-                            thickness = 2.dp
+                        Text(
+                            text = rutaSeleccionada.descripcion
+                                ?: "Esta ruta no tiene descripción registrada.",
+                            style = MaterialTheme.typography.bodyMedium
                         )
 
-                        // Restaurantes asociados a la ruta
-                        val restaurantesDeRuta: List<RestaurantDto> =
-                            rutaSeleccionada.restaurantes
+                        Spacer(modifier = Modifier.height(6.dp))
 
                         Text(
                             text = "Restaurantes en la ruta:",
@@ -195,39 +172,51 @@ fun VerRutas(navController: NavHostController) {
                             fontWeight = FontWeight.SemiBold
                         )
 
-                        Spacer(modifier = Modifier.height(8.dp))
-
-                        if (restaurantesDeRuta.isEmpty()) {
-                            Text(
-                                text = "Esta ruta aún no tiene restaurantes asociados.",
-                                style = MaterialTheme.typography.bodyMedium
-                            )
+                        if (rutaSeleccionada.restaurantes.isEmpty()) {
+                            Text("No hay restaurantes asociados a esta ruta.")
                         } else {
                             Column(
-                                verticalArrangement = Arrangement.spacedBy(12.dp),
-                                modifier = Modifier.fillMaxWidth()
+                                modifier = Modifier.fillMaxWidth(),
+                                verticalArrangement = Arrangement.spacedBy(10.dp)
                             ) {
-                                restaurantesDeRuta.forEach { restaurante ->
+                                rutaSeleccionada.restaurantes.forEach { r ->
                                     RestaurantItems(
-                                        nombre = restaurante.nombre,
-                                        direccion = restaurante.direccionText
-                                            ?: restaurante.ubicacion
+                                        nombre = r.nombre,
+                                        direccion = r.direccionText
+                                            ?: r.ubicacion
                                             ?: "Dirección no especificada",
-                                        descripcion = restaurante.descripcion
-                                            ?: "Sin descripción"
+                                        descripcion = r.descripcion ?: "Sin descripción"
                                     )
                                 }
                             }
                         }
+
+                        Spacer(modifier = Modifier.height(8.dp))
+
+                        Button(
+                            onClick = {
+                                rutaSeleccionada.id?.let { vm.eliminar(it) }
+                            },
+                            modifier = Modifier.fillMaxWidth(),
+                            shape = RoundedCornerShape(16.dp)
+                        ) {
+                            Text("Eliminar de guardadas")
+                        }
+
+                        if (deleteState.success == false && deleteState.error != null) {
+                            Text(
+                                text = "No se pudo eliminar: ${deleteState.error}",
+                                color = MaterialTheme.colorScheme.error
+                            )
+                        }
                     }
 
-                    // Botón volver
                     Button(
-                        onClick = { navController.navigate("homeAdmin") },
+                        onClick = { navController.navigate("homeUser") },
                         modifier = Modifier.fillMaxWidth(),
                         shape = RoundedCornerShape(16.dp)
                     ) {
-                        Text(text = "Volver")
+                        Text("Volver")
                     }
                 }
             }
