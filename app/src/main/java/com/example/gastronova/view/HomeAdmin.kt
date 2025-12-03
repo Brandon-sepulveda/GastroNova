@@ -90,13 +90,13 @@ fun HomeAdmin(navController: NavHostController) {
                 Button(
                     onClick = { navController.navigate("login") },
                     modifier = Modifier.fillMaxWidth(),
-                    border = BorderStroke(width = 2.dp, color = Olive600), // El borde se mantiene
+                    border = BorderStroke(width = 2.dp, color = Olive600),
                     shape = RoundedCornerShape(16.dp),
                     colors = ButtonDefaults.buttonColors(
-                        containerColor = Color.Transparent, // ARREGLO: Fondo transparente
-                        contentColor = Olive600             // ARREGLO: Texto del mismo color que el borde
+                        containerColor = Color.Transparent,
+                        contentColor = Olive600
                     ),
-                    elevation = ButtonDefaults.buttonElevation(0.dp) // Opcional: quita la sombra para que se vea plano
+                    elevation = ButtonDefaults.buttonElevation(0.dp)
                 ) {
                     Text(text = "Cerrar sesión")
                 }

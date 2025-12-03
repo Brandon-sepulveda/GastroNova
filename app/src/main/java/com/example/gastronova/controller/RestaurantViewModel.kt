@@ -30,16 +30,12 @@ class RestaurantViewModel(
     private val _listState = MutableStateFlow(RestaurantListState())
     val listState: StateFlow<RestaurantListState> = _listState
 
-    /**
-     * Método básico que registra sólo nombre + descripción.
-     * Lo usamos internamente desde registrarRestaurant(...)
-     */
+
     fun registrar(nombre: String, descripcion: String?) {
         _registerState.value = SimpleUiState(loading = true)
         viewModelScope.launch {
             val dto = RestaurantDto(
                 nombre = nombre,
-                // 👇 no mandamos dirección desde aquí (queda null)
                 direccionText = null,
                 descripcion = descripcion
             )
@@ -51,10 +47,7 @@ class RestaurantViewModel(
         }
     }
 
-    /**
-     * Este es el método que llama tu pantalla RegistrarRestaurant.
-     * Por ahora, sólo mandamos nombre + descripción al backend.
-     */
+
     fun registrarRestaurant(
         nombre: String,
         empresa: String,
@@ -62,7 +55,6 @@ class RestaurantViewModel(
         tipo: String,
         descripcion: String
     ) {
-        // De momento, sólo usamos nombre + descripción.
         registrar(nombre, descripcion)
     }
 

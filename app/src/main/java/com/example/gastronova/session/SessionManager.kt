@@ -4,7 +4,7 @@ object SessionManager {
     var usuarioId: Int? = null
     var usuarioNombre: String? = null
     var usuarioUsuario: String? = null
-    var tipoUsuario: Boolean? = null  // true = admin, false = usuario normal
+    var tipoUsuario: Boolean? = null
 
     fun isLoggedIn(): Boolean = usuarioId != null
 

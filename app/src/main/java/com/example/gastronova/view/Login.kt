@@ -53,15 +53,14 @@ fun Login(navController: NavHostController) {
     val vm: AuthViewModel = viewModel()
     val state by vm.loginState.collectAsState()
 
-    // Navega cuando el login es exitoso, según el tipo de usuario
+
     LaunchedEffect(state.success, state.usuario) {
         val usuarioLogueado = state.usuario
         if (state.success == true && usuarioLogueado != null) {
 
-            // 👀 acá usamos el campo del DTO ya corregido: tipoUsuario
+
             val esAdmin = usuarioLogueado.tipoUsuario == true
 
-            // Asegúrate que estas rutas existan en AppNav
             val destino = if (esAdmin) "homeAdmin" else "homeUser"
 
             navController.navigate(destino) {

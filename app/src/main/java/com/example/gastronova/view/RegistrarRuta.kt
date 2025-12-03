@@ -1,11 +1,9 @@
 package com.example.gastronova.view
 
 import androidx.compose.foundation.Image
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
@@ -18,9 +16,6 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.Checkbox
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
@@ -46,7 +41,7 @@ import androidx.navigation.NavHostController
 import com.example.gastronova.R
 import com.example.gastronova.controller.RestaurantViewModel
 import com.example.gastronova.controller.RutaViewModel
-import com.example.gastronova.model.RestaurantDto
+import com.example.gastronova.view.components.RestaurantSelectableItem
 
 private const val MAX_RESTAURANTS = 5
 
@@ -54,30 +49,23 @@ private const val MAX_RESTAURANTS = 5
 @Composable
 fun RegistrarRuta(navController: NavHostController) {
 
-    // ViewModels
     val rutaVm: RutaViewModel = viewModel()
     val restaurantVm: RestaurantViewModel = viewModel()
 
-    // Estados de los ViewModel
     val registerState by rutaVm.registerState.collectAsState()
     val restaurantListState by restaurantVm.listState.collectAsState()
 
-    // Estados locales del formulario
     var nombreRuta by remember { mutableStateOf("") }
     var descripcion by remember { mutableStateOf("") }
 
-    // IDs de restaurantes seleccionados (como Long)
     var selectedRestaurantIds by remember { mutableStateOf(setOf<Long>()) }
 
-    // Mensaje de validación (seleccionar exactamente 5)
     var selectionMsg by remember { mutableStateOf<String?>(null) }
 
-    // Cargar restaurantes al entrar a la pantalla
     LaunchedEffect(Unit) {
         restaurantVm.cargarRestaurants()
     }
 
-    // Si se registró bien, volvemos al homeAdmin
     LaunchedEffect(registerState.success) {
         if (registerState.success == true) {
             navController.navigate("homeAdmin") {
@@ -123,7 +111,6 @@ fun RegistrarRuta(navController: NavHostController) {
                     modifier = Modifier.align(Alignment.CenterHorizontally)
                 )
 
-                // NOMBRE DE LA RUTA
                 OutlinedTextField(
                     value = nombreRuta,
                     onValueChange = { nombreRuta = it },
@@ -133,7 +120,6 @@ fun RegistrarRuta(navController: NavHostController) {
                     singleLine = true
                 )
 
-                // DESCRIPCIÓN
                 OutlinedTextField(
                     value = descripcion,
                     onValueChange = { descripcion = it },
@@ -167,7 +153,6 @@ fun RegistrarRuta(navController: NavHostController) {
                     )
                 }
 
-                // Estado restaurantes
                 when {
                     restaurantListState.loading -> {
                         Text("Cargando restaurantes...")
@@ -205,7 +190,8 @@ fun RegistrarRuta(navController: NavHostController) {
                                                     selectedRestaurantIds - idLong
                                                 } else {
                                                     if (selectedRestaurantIds.size >= MAX_RESTAURANTS) {
-                                                        selectionMsg = "Solo puedes seleccionar $MAX_RESTAURANTS restaurantes."
+                                                        selectionMsg =
+                                                            "Solo puedes seleccionar $MAX_RESTAURANTS restaurantes."
                                                         selectedRestaurantIds
                                                     } else {
                                                         selectedRestaurantIds + idLong
@@ -219,7 +205,6 @@ fun RegistrarRuta(navController: NavHostController) {
                     }
                 }
 
-                // Mensajes de validación de selección
                 if (selectionMsg != null) {
                     Text(
                         text = selectionMsg!!,
@@ -228,7 +213,6 @@ fun RegistrarRuta(navController: NavHostController) {
                     )
                 }
 
-                // Mensajes de error del registro
                 if (registerState.success == false) {
                     Text(
                         text = "No se pudo registrar la ruta (puede que ya exista una con ese nombre).",
@@ -247,7 +231,6 @@ fun RegistrarRuta(navController: NavHostController) {
 
                 Spacer(modifier = Modifier.height(8.dp))
 
-                // Botón Guardar ruta
                 Button(
                     onClick = {
                         val ids = selectedRestaurantIds.toList()
@@ -274,7 +257,6 @@ fun RegistrarRuta(navController: NavHostController) {
                     Text(text = if (registerState.loading) "Guardando..." else "Guardar ruta")
                 }
 
-                // Botón Volver
                 Button(
                     onClick = { navController.navigate("homeAdmin") },
                     modifier = Modifier.fillMaxWidth(),
@@ -283,63 +265,6 @@ fun RegistrarRuta(navController: NavHostController) {
                     Text(text = "Volver")
                 }
             }
-        }
-    }
-}
-
-/**
- * Ítem de restaurant con checkbox para selección
- */
-@Composable
-fun RestaurantSelectableItem(
-    restaurant: RestaurantDto,
-    selected: Boolean,
-    enabled: Boolean,
-    onToggle: () -> Unit,
-    modifier: Modifier = Modifier
-) {
-    Card(
-        modifier = modifier
-            .fillMaxWidth()
-            .clickable(enabled = enabled) { onToggle() },
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
-        shape = RoundedCornerShape(12.dp)
-    ) {
-        Row(
-            modifier = Modifier
-                .padding(12.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.SpaceBetween
-        ) {
-
-            Column(
-                modifier = Modifier.weight(1f),
-                verticalArrangement = Arrangement.spacedBy(2.dp)
-            ) {
-                Text(
-                    text = restaurant.nombre,
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.SemiBold
-                )
-                Text(
-                    text = restaurant.direccionText
-                        ?: restaurant.ubicacion
-                        ?: "Dirección no especificada",
-                    style = MaterialTheme.typography.labelMedium
-                )
-                if (!restaurant.descripcion.isNullOrBlank()) {
-                    Text(
-                        text = restaurant.descripcion,
-                        style = MaterialTheme.typography.bodySmall
-                    )
-                }
-            }
-
-            Checkbox(
-                checked = selected,
-                onCheckedChange = { if (enabled) onToggle() },
-                enabled = enabled
-            )
         }
     }
 }

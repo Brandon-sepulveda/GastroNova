@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
@@ -43,6 +44,8 @@ import com.example.gastronova.controller.FavoritosViewModel
 import com.example.gastronova.model.RutaDto
 import com.example.gastronova.view.components.RestaurantItems
 import com.example.gastronova.view.components.Selector
+
+
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -76,7 +79,6 @@ fun RutasGuardadas(navController: NavHostController) {
         contentWindowInsets = WindowInsets.safeDrawing
     ) { innerPadding ->
 
-        // Imagen del gato arriba
         Box(modifier = Modifier.padding(16.dp)) {
             Image(
                 painter = painterResource(id = R.drawable.gato_mapa),
@@ -84,7 +86,7 @@ fun RutasGuardadas(navController: NavHostController) {
                 modifier = Modifier
                     .align(Alignment.Center)
                     .padding(start = 110.dp)
-                    .fillMaxWidth(0.3f),
+                    .size(125.dp),
                 contentScale = ContentScale.Fit
             )
         }
@@ -130,9 +132,10 @@ fun RutasGuardadas(navController: NavHostController) {
                         )
                     }
 
-                    if (!listState.loading && listState.data.isEmpty()) {
+                    if (!listState.loading && listState.error == null && listState.data.isEmpty()) {
                         Text("Aún no tienes rutas guardadas.")
                     }
+
 
                     // Selector SOLO con rutas guardadas
                     if (listState.data.isNotEmpty()) {

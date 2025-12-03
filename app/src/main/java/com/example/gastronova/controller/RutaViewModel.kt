@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.gastronova.model.RutaCreateRequest
 import com.example.gastronova.model.RutaDto
+import com.example.gastronova.repository.FavoritosRepository
 import com.example.gastronova.repository.RutaRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -15,24 +16,55 @@ data class RutaListState(
     val error: String? = null
 )
 
-/**
- * SimpleUiState ya lo tenías creado y usado en otros ViewModel.
- * Lo seguimos reutilizando tal cual.
- */
+data class FavoritosState(
+    val loading: Boolean = false,
+    val favoritosIds: Set<Int> = emptySet(),
+    val error: String? = null
+)
+
 class RutaViewModel(
-    private val repo: RutaRepository = RutaRepository()
+    private val repo: RutaRepository = RutaRepository(),
+    private val favRepo: FavoritosRepository = FavoritosRepository()
 ) : ViewModel() {
 
+    // ===============================
+    //   ESTADOS QUE YA TENÍAS
+    // ===============================
     private val _registerState = MutableStateFlow(SimpleUiState())
     val registerState: StateFlow<SimpleUiState> = _registerState
 
     private val _listState = MutableStateFlow(RutaListState())
     val listState: StateFlow<RutaListState> = _listState
 
-    /**
-     * Método antiguo: lo dejamos pero ahora delega a la nueva versión con
-     * lista vacía de restaurantIds.
-     */
+    // ===============================
+    //  FAVORITOS + MENSAJES
+    // ===============================
+    private val _favoritosState = MutableStateFlow(FavoritosState())
+    val favoritosState: StateFlow<FavoritosState> = _favoritosState
+
+    // ruta seleccionada en el selector (VerRutasUsuario)
+    private val _selectedFavoritoRutaId = MutableStateFlow<Int?>(null)
+    val selectedFavoritoRutaId: StateFlow<Int?> = _selectedFavoritoRutaId
+
+    // Mensaje para mostrar en Snackbar/Toast
+    private val _uiMessage = MutableStateFlow<String?>(null)
+    val uiMessage: StateFlow<String?> = _uiMessage
+
+    // Para deshabilitar el botón mientras guarda
+    private val _guardandoFavorito = MutableStateFlow(false)
+    val guardandoFavorito: StateFlow<Boolean> = _guardandoFavorito
+
+    fun consumirMensaje() {
+        _uiMessage.value = null
+    }
+
+    fun seleccionarRutaFavorito(rutaId: Int?) {
+        _selectedFavoritoRutaId.value = rutaId
+    }
+
+    // ===============================
+    //   REGISTRO RUTA (YA TENÍAS)
+    // ===============================
     fun registrar(nombre: String, descripcion: String?) {
         registrarConRestaurantes(
             nombre = nombre,
@@ -41,16 +73,11 @@ class RutaViewModel(
         )
     }
 
-    /**
-     * NUEVO: registra la ruta y asocia los restaurantes (por id).
-     * Esto es lo que usas desde la nueva view RegistrarRuta.
-     */
     fun registrarConRestaurantes(
         nombre: String,
         descripcion: String?,
         restaurantIds: List<Long>
     ) {
-        // Validación: la ruta debe tener EXACTAMENTE 5 restaurantes
         if (restaurantIds.size != 5) {
             _registerState.value = SimpleUiState(error = "Debes seleccionar exactamente 5 restaurantes.")
             return
@@ -80,6 +107,61 @@ class RutaViewModel(
                 onSuccess = { lista -> RutaListState(data = lista) },
                 onFailure = { e -> RutaListState(error = e.message ?: "Error desconocido") }
             )
+        }
+    }
+
+    // ===============================
+    //   NUEVO: FAVORITOS
+    // ===============================
+    fun cargarFavoritos(usuarioId: Int) {
+        _favoritosState.value = FavoritosState(loading = true)
+        viewModelScope.launch {
+            val res = favRepo.listarFavoritos(usuarioId)
+            _favoritosState.value = res.fold(
+                onSuccess = { lista ->
+                    val ids = lista.mapNotNull { it.id }.toSet()
+                    FavoritosState(favoritosIds = ids)
+                },
+                onFailure = { e ->
+                    FavoritosState(error = e.message ?: "Error al cargar favoritos")
+                }
+            )
+        }
+    }
+
+    fun guardarRutaSeleccionadaEnFavoritos(usuarioId: Int) {
+        val rutaId = _selectedFavoritoRutaId.value
+        if (rutaId == null) {
+            _uiMessage.value = "Debes seleccionar una ruta"
+            return
+        }
+
+        if (_favoritosState.value.favoritosIds.contains(rutaId)) {
+            _uiMessage.value = "Esa ruta ya está en favoritos"
+            return
+        }
+
+        _guardandoFavorito.value = true
+
+        viewModelScope.launch {
+            val res = favRepo.guardarFavorito(usuarioId, rutaId)
+            res.fold(
+                onSuccess = {
+                    // ✅ Mensaje
+                    _uiMessage.value = "Se guardó en favoritos"
+                    // ✅ Limpiar selección del selector
+                    _selectedFavoritoRutaId.value = null
+                    // ✅ Marcarla como guardada para deshabilitarla
+                    _favoritosState.value = _favoritosState.value.copy(
+                        favoritosIds = _favoritosState.value.favoritosIds + rutaId
+                    )
+                },
+                onFailure = { e ->
+                    _uiMessage.value = e.message ?: "No se pudo guardar en favoritos"
+                }
+            )
+
+            _guardandoFavorito.value = false
         }
     }
 }

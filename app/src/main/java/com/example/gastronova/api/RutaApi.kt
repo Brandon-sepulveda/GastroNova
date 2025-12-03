@@ -9,9 +9,8 @@ import retrofit2.http.POST
 
 interface RutaApi {
 
-    // Ahora recibe RutaCreateRequest para poder mandar los restaurantIds
     @POST("ruta/register")
-    suspend fun registrar(@Body request: RutaCreateRequest): Response<Boolean>
+    suspend fun registrar(@Body request: RutaCreateRequest): Response<Unit>
 
     @GET("ruta/list")
     suspend fun listar(): Response<List<RutaDto>>

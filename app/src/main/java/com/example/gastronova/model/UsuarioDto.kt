@@ -10,6 +10,6 @@ data class UsuarioDto(
     val usuario: String,
     val contrasena: String,
 
-    @SerializedName("tipo_usuario") // <- el backend sigue usando tipo_usuario
-    val tipoUsuario: Boolean = true // <- en Kotlin usamos camelCase
+    @SerializedName("tipo_usuario")
+    val tipoUsuario: Boolean = true
 )

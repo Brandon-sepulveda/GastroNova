@@ -11,8 +11,7 @@ import retrofit2.converter.gson.GsonConverterFactory
 import java.util.concurrent.TimeUnit
 
 object ApiClient {
-    // Emulador: http://10.0.2.2:8080/
-    // Dispositivo físico (misma Wi-Fi): http://<IP_DE_TU_PC>:8080/
+
     private const val BASE_URL = "http://192.168.18.242:8080/"
 
     private val logging = HttpLoggingInterceptor().apply {
@@ -26,43 +25,32 @@ object ApiClient {
         .writeTimeout(20, TimeUnit.SECONDS)
         .build()
 
-    // --- Usuario ---
-    val usuarioApi: UsuarioApi by lazy {
+
+    val retrofit: Retrofit by lazy {
         Retrofit.Builder()
             .baseUrl(BASE_URL)
             .addConverterFactory(GsonConverterFactory.create())
             .client(client)
             .build()
-            .create(UsuarioApi::class.java)
+    }
+
+    // --- Usuario ---
+    val usuarioApi: UsuarioApi by lazy {
+        retrofit.create(UsuarioApi::class.java)
     }
 
     // --- Restaurant ---
     val restaurantApi: RestaurantApi by lazy {
-        Retrofit.Builder()
-            .baseUrl(BASE_URL)
-            .addConverterFactory(GsonConverterFactory.create())
-            .client(client)
-            .build()
-            .create(RestaurantApi::class.java)
+        retrofit.create(RestaurantApi::class.java)
     }
 
     // --- Ruta ---
     val rutaApi: RutaApi by lazy {
-        Retrofit.Builder()
-            .baseUrl(BASE_URL)
-            .addConverterFactory(GsonConverterFactory.create())
-            .client(client)
-            .build()
-            .create(RutaApi::class.java)
+        retrofit.create(RutaApi::class.java)
     }
 
     // --- Favoritos (rutas guardadas) ---
     val favoritosApi: FavoritosApi by lazy {
-        Retrofit.Builder()
-            .baseUrl(BASE_URL)
-            .addConverterFactory(GsonConverterFactory.create())
-            .client(client)
-            .build()
-            .create(FavoritosApi::class.java)
+        retrofit.create(FavoritosApi::class.java)
     }
 }

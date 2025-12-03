@@ -13,11 +13,9 @@ class RestaurantRepository(
             val response = api.registrar(restaurant)
 
             if (response.isSuccessful) {
-                // body puede ser true / false / null
                 val body = response.body()
                 Result.success(body == true)
             } else if (response.code() == 409) {
-                // 409 = nombre duplicado
                 Result.success(false)
             } else {
                 Result.failure(Exception("Error HTTP ${response.code()} al registrar restaurante"))

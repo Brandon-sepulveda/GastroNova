@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
@@ -22,11 +23,14 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -41,62 +45,89 @@ import androidx.navigation.NavHostController
 import com.example.gastronova.R
 import com.example.gastronova.controller.FavoritosViewModel
 import com.example.gastronova.controller.RutaViewModel
-import com.example.gastronova.model.RutaDto
 import com.example.gastronova.model.RestaurantDto
-import com.example.gastronova.view.components.Selector
+import com.example.gastronova.model.RutaDto
 import com.example.gastronova.view.components.RestaurantItems
+import com.example.gastronova.view.components.Selector
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun VerRutasUsuario(navController: NavHostController) {
 
-    // Estados locales para los selectores
-    var tipoRuta by remember { mutableStateOf("") }
     var rutaSeleccionadaNombre by remember { mutableStateOf("") }
 
-    // ViewModels
     val rutaVm: RutaViewModel = viewModel()
     val favoritosVm: FavoritosViewModel = viewModel()
 
-    val listaState by rutaVm.listState.collectAsState()
+    val rutasState by rutaVm.listState.collectAsState()
     val favSaveState by favoritosVm.saveState.collectAsState()
+    val favListState by favoritosVm.listState.collectAsState()
+    var selectorRutaKey by remember { mutableStateOf(0) }
 
-    // Cargar rutas desde el backend al entrar
+
+    val snackbarHostState = remember { SnackbarHostState() }
+
+    // Cargar rutas + favoritos al entrar
     LaunchedEffect(Unit) {
         rutaVm.cargarRutas()
+        favoritosVm.cargarFavoritos()
     }
 
-    // Tipos de ruta (solo UI, como antes)
-    val tipos = listOf("Tematica unica", "Tematica mixta")
 
-    // Nombres de rutas disponibles desde el backend
-    val rutasDisponibles: List<String> = listaState.data.map { it.nombre }
-
-    // Ruta seleccionada según el nombre escogido
+    // Ruta seleccionada
     val rutaSeleccionada: RutaDto? =
-        listaState.data.firstOrNull { it.nombre == rutaSeleccionadaNombre }
+        rutasState.data.firstOrNull { it.nombre == rutaSeleccionadaNombre }
+
+    // ids ya guardadas
+    val favoritosIds: Set<Int> = favListState.data.mapNotNull { it.id }.toSet()
+
+    // nombres deshabilitados en el selector
+    val disabledNames: Set<String> =
+        rutasState.data.filter { it.id != null && favoritosIds.contains(it.id!!) }
+            .map { it.nombre }
+            .toSet()
+
+    val rutasDisponibles: List<String> = rutasState.data.map { it.nombre }
+
+    val rutaYaGuardada = rutaSeleccionada?.id?.let { favoritosIds.contains(it) } == true
+
+    LaunchedEffect(favSaveState.success) {
+        if (favSaveState.success == true) {
+            snackbarHostState.showSnackbar("Se guardó en favoritos")
+
+            rutaSeleccionadaNombre = ""
+
+            selectorRutaKey++
+
+            favoritosVm.limpiarSaveState()
+            favoritosVm.cargarFavoritos()
+        }
+    }
+
+    LaunchedEffect(favSaveState.error) {
+        if (favSaveState.success == false && favSaveState.error != null) {
+            snackbarHostState.showSnackbar("No se pudo guardar: ${favSaveState.error}")
+            favoritosVm.limpiarSaveState()
+        }
+    }
 
     Scaffold(
-        contentWindowInsets = WindowInsets.safeDrawing
+        contentWindowInsets = WindowInsets.safeDrawing,
+        snackbarHost = { SnackbarHost(hostState = snackbarHostState) }
     ) { innerPadding ->
 
-        // Imagen del gato con mapa
-        Box(
-            modifier = Modifier
-                .padding(16.dp)
-        ) {
+        Box(modifier = Modifier.padding(16.dp)) {
             Image(
                 painter = painterResource(id = R.drawable.gato_mapa),
                 contentDescription = "GatoMapa",
                 modifier = Modifier
                     .align(Alignment.Center)
                     .padding(start = 110.dp)
-                    .fillMaxWidth(0.3f),
+                    .size(125.dp),
                 contentScale = ContentScale.Fit
             )
         }
 
-        // Contenido principal
         Box(
             modifier = Modifier
                 .fillMaxSize()
@@ -104,6 +135,7 @@ fun VerRutasUsuario(navController: NavHostController) {
                 .navigationBarsPadding()
                 .padding(innerPadding)
         ) {
+
             Card(
                 modifier = Modifier
                     .align(Alignment.TopCenter)
@@ -126,38 +158,34 @@ fun VerRutasUsuario(navController: NavHostController) {
                         fontWeight = FontWeight.Bold
                     )
 
-                    // Estado de carga
-                    if (listaState.loading) {
-                        Text("Cargando rutas...")
-                    }
+                    if (rutasState.loading) Text("Cargando rutas...")
 
-                    // Error al cargar
-                    if (listaState.error != null) {
+                    if (rutasState.error != null) {
                         Text(
-                            text = "Error al cargar rutas: ${listaState.error}",
+                            text = "Error al cargar rutas: ${rutasState.error}",
                             color = MaterialTheme.colorScheme.error
                         )
                     }
 
-                    // Selector de tipo de ruta (solo UI)
-                    Selector(
-                        label = "Tipo de ruta",
-                        value = tipoRuta,
-                        options = tipos,
-                        onSelect = { tipoRuta = it },
-                        modifier = Modifier.fillMaxWidth()
-                    )
-
-                    // Selector de ruta con datos desde backend
                     Selector(
                         label = "Ruta",
                         value = rutaSeleccionadaNombre,
                         options = rutasDisponibles,
                         onSelect = { rutaSeleccionadaNombre = it },
+                        disabledOptions = disabledNames,
+                        resetKey = selectorRutaKey,
                         modifier = Modifier.fillMaxWidth()
                     )
 
-                    // Si hay ruta seleccionada
+
+
+                    if (rutaYaGuardada) {
+                        Text(
+                            text = "Esta ruta ya está guardada en favoritos.",
+                            color = MaterialTheme.colorScheme.error
+                        )
+                    }
+
                     if (rutaSeleccionada != null) {
 
                         HorizontalDivider(
@@ -167,24 +195,17 @@ fun VerRutasUsuario(navController: NavHostController) {
                             thickness = 2.dp
                         )
 
-                        // Nombre y descripción
                         Text(
                             text = rutaSeleccionada.nombre,
                             style = MaterialTheme.typography.titleLarge,
                             fontWeight = FontWeight.Bold
                         )
 
-                        if (!rutaSeleccionada.descripcion.isNullOrBlank()) {
-                            Text(
-                                text = rutaSeleccionada.descripcion!!,
-                                style = MaterialTheme.typography.bodyMedium
-                            )
-                        } else {
-                            Text(
-                                text = "Esta ruta aún no tiene descripción registrada.",
-                                style = MaterialTheme.typography.bodyMedium
-                            )
-                        }
+                        Text(
+                            text = rutaSeleccionada.descripcion?.takeIf { it.isNotBlank() }
+                                ?: "Esta ruta aún no tiene descripción registrada.",
+                            style = MaterialTheme.typography.bodyMedium
+                        )
 
                         HorizontalDivider(
                             modifier = Modifier
@@ -193,9 +214,7 @@ fun VerRutasUsuario(navController: NavHostController) {
                             thickness = 2.dp
                         )
 
-                        // Restaurantes asociados a la ruta
-                        val restaurantesDeRuta: List<RestaurantDto> =
-                            rutaSeleccionada.restaurantes
+                        val restaurantesDeRuta: List<RestaurantDto> = rutaSeleccionada.restaurantes
 
                         Text(
                             text = "Restaurantes en la ruta:",
@@ -206,10 +225,7 @@ fun VerRutasUsuario(navController: NavHostController) {
                         Spacer(modifier = Modifier.height(8.dp))
 
                         if (restaurantesDeRuta.isEmpty()) {
-                            Text(
-                                text = "Esta ruta aún no tiene restaurantes asociados.",
-                                style = MaterialTheme.typography.bodyMedium
-                            )
+                            Text("Esta ruta aún no tiene restaurantes asociados.")
                         } else {
                             Column(
                                 verticalArrangement = Arrangement.spacedBy(12.dp),
@@ -221,23 +237,14 @@ fun VerRutasUsuario(navController: NavHostController) {
                                         direccion = restaurante.direccionText
                                             ?: restaurante.ubicacion
                                             ?: "Dirección no especificada",
-                                        descripcion = restaurante.descripcion
-                                            ?: "Sin descripción"
+                                        descripcion = restaurante.descripcion ?: "Sin descripción"
                                     )
                                 }
                             }
                         }
                     }
 
-                    // Error al guardar favoritos
-                    if (favSaveState.success == false && favSaveState.error != null) {
-                        Text(
-                            text = "No se pudo guardar en favoritos: ${favSaveState.error}",
-                            color = MaterialTheme.colorScheme.error
-                        )
-                    }
-
-                    // Botón guardar ruta en favoritos
+                    // Botón guardar favoritos
                     Button(
                         onClick = {
                             rutaSeleccionada?.id?.let { rutaId ->
@@ -246,18 +253,17 @@ fun VerRutasUsuario(navController: NavHostController) {
                         },
                         modifier = Modifier.fillMaxWidth(),
                         shape = RoundedCornerShape(16.dp),
-                        enabled = rutaSeleccionada != null
+                        enabled = (rutaSeleccionada != null) && !rutaYaGuardada && !favSaveState.loading
                     ) {
-                        Text(text = "Guardar ruta")
+                        Text(if (favSaveState.loading) "Guardando..." else "Guardar ruta")
                     }
 
-                    // Botón volver
                     Button(
                         onClick = { navController.navigate("homeUser") },
                         modifier = Modifier.fillMaxWidth(),
                         shape = RoundedCornerShape(16.dp)
                     ) {
-                        Text(text = "Volver")
+                        Text("Volver")
                     }
                 }
             }

@@ -1,6 +1,5 @@
 package com.example.gastronova.view
 
-import android.net.Uri
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -16,10 +15,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.ExposedDropdownMenuBox
-import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
@@ -36,17 +32,16 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.zIndex
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import com.example.gastronova.R
 import com.example.gastronova.controller.RestaurantViewModel
-import com.example.gastronova.view.components.CampoAdjuntarImagen
+
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun RegistrarRestaurant(navController: NavHostController) {
-    // ViewModel y estado para el registro
+
     val vm: RestaurantViewModel = viewModel()
     val state by vm.registerState.collectAsState()
 
@@ -56,21 +51,7 @@ fun RegistrarRestaurant(navController: NavHostController) {
     var ubicacion by remember { mutableStateOf("") }
     var tipoRestaurant by remember { mutableStateOf("") }
     var descripcion by remember { mutableStateOf("") }
-    var imagen by remember { mutableStateOf<Uri?>(null) }
 
-    // Opciones de tipo de restaurante
-    val tipos = listOf(
-        "Italiano",
-        "Mexicano",
-        "Japones",
-        "Asiatico",
-        "China",
-        "Peruana",
-        "Molecular",
-        "Argentia",
-        "Vegana"
-    )
-    var expanded by remember { mutableStateOf(false) }
 
     // Cuando el registro sea exitoso, volvemos a la pantalla Opcion (home admin)
     LaunchedEffect(state.success) {
@@ -153,44 +134,6 @@ fun RegistrarRestaurant(navController: NavHostController) {
                     singleLine = true
                 )
 
-                // TIPO DE RESTAURANTE (dropdown)
-                ExposedDropdownMenuBox(
-                    expanded = expanded,
-                    onExpandedChange = { expanded = !expanded },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .zIndex(1f)
-                ) {
-                    OutlinedTextField(
-                        value = tipoRestaurant,
-                        onValueChange = { },              // readOnly
-                        readOnly = true,
-                        label = { Text("Tipo de restaurant") },
-                        trailingIcon = {
-                            ExposedDropdownMenuDefaults.TrailingIcon(expanded)
-                        },
-                        shape = RoundedCornerShape(16.dp),
-                        singleLine = true,
-                        modifier = Modifier
-                            .menuAnchor()
-                            .fillMaxWidth()
-                    )
-
-                    ExposedDropdownMenu(
-                        expanded = expanded,
-                        onDismissRequest = { expanded = false }
-                    ) {
-                        tipos.forEach { opcion ->
-                            DropdownMenuItem(
-                                text = { Text(opcion) },
-                                onClick = {
-                                    tipoRestaurant = opcion
-                                    expanded = false
-                                }
-                            )
-                        }
-                    }
-                }
 
                 // DESCRIPCION
                 OutlinedTextField(
@@ -199,12 +142,6 @@ fun RegistrarRestaurant(navController: NavHostController) {
                     label = { Text("Descripción del restaurant") },
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(16.dp)
-                )
-
-                // IMAGEN (solo UI por ahora, no se envía aún al backend)
-                CampoAdjuntarImagen(
-                    imagenUri = imagen,
-                    onImagenSeleccionada = { imagen = it }
                 )
 
                 Button(

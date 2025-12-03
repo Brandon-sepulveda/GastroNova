@@ -29,7 +29,7 @@ class FavoritosViewModel(
 
     // usuarioId real, tomado desde el login (SessionManager)
     private val usuarioId: Int
-        get() = SessionManager.usuarioId ?: 0   // si es null, usamos 0 (puedes manejar esto mejor en tu UI)
+        get() = SessionManager.usuarioId ?: 0
 
     private val _saveState = MutableStateFlow(FavoritosOperationState())
     val saveState: StateFlow<FavoritosOperationState> = _saveState
@@ -93,6 +93,11 @@ class FavoritosViewModel(
             )
         }
     }
+    fun limpiarSaveState() {
+        _saveState.value = FavoritosOperationState()
+    }
+
+
 
     // ==========================
     //   ELIMINAR RUTA FAVORITA

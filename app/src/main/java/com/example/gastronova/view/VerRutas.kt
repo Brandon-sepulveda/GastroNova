@@ -51,8 +51,7 @@ import com.example.gastronova.view.components.RestaurantItems
 @Composable
 fun VerRutas(navController: NavHostController) {
 
-    // Estados locales para los selectores
-    var tipoRuta by remember { mutableStateOf("") }
+
     var rutaSeleccionadaNombre by remember { mutableStateOf("") }
 
     // ViewModels
@@ -60,15 +59,11 @@ fun VerRutas(navController: NavHostController) {
     val favoritosVm: FavoritosViewModel = viewModel()
 
     val listaState by rutaVm.listState.collectAsState()
-    val favSaveState by favoritosVm.saveState.collectAsState()
 
     // Cargar rutas desde el backend al entrar
     LaunchedEffect(Unit) {
         rutaVm.cargarRutas()
     }
-
-    // Tipos de ruta (solo UI, como antes)
-    val tipos = listOf("Tematica unica", "Tematica mixta")
 
     // Nombres de rutas disponibles desde el backend
     val rutasDisponibles: List<String> = listaState.data.map { it.nombre }

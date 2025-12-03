@@ -29,5 +29,6 @@ fun AppNav(modifier: Modifier = Modifier) {
         composable("VerRutas") { VerRutas(navController) }
         composable("RutasGuardadas") { RutasGuardadas(navController) }
         composable("VerRutasUsuario") { VerRutasUsuario(navController) }
+        composable("ScanQR") { ScanQr(navController) }
     }
 }

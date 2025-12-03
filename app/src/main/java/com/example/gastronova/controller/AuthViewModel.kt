@@ -36,7 +36,7 @@ class AuthViewModel(
         correo: String,
         usuario: String,
         contrasena: String,
-        tipoUsuario: Boolean = true   // <- nombre coherente con el DTO
+        tipoUsuario: Boolean = true
     ) {
         _registerState.value = AuthUiState(loading = true)
         viewModelScope.launch {
@@ -46,7 +46,7 @@ class AuthViewModel(
                 correo = correo,
                 usuario = usuario,
                 contrasena = contrasena,
-                tipoUsuario = tipoUsuario   // <- AQUÍ estaba el error antes
+                tipoUsuario = tipoUsuario
             )
             val res = repo.registrar(dto)
             _registerState.value = res.fold(
